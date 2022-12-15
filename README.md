@@ -1,6 +1,6 @@
 predictiveFeatures Package Introduction
 ================
-2021-06-11
+2022-12-15
 
 **predictiveFeatures** is a package for the extraction of comprehensive features on genomic intervals. A fundamental task in a genomic data science project is to extract informative genomic metrics that can predict quantities defined on range-based genomic annotations. In the past, the feature engineering tasks are often handled by a small number of handcrafted genome-derived features and sequence features. However, these methods cannot fully explore the interactive space between genomic regions and different genomic properties, such as the length and sequence contents.
 
