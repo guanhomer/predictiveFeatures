@@ -1,0 +1,530 @@
+---
+title: "predictiveFeatures Package Introduction"
+author: 
+- name: Zhen Wei 
+  affiliation:
+  - Department of Biological Sciences, Xi’an Jiaotong-Liverpool University, Suzhou, Jiangsu, China
+  - Institute of Integrative Biology, University of Liverpool, Liverpool, United Kingdom
+  email: Zhen.Wei01@xjtlu.edu.cn
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+graphics: yes
+vignette: >
+  %\VignetteIndexEntry{predictiveFeatures user's guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignettePackage{predictiveFeatures}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "left")
+```
+
+**predictiveFeatures** is a package for the extraction of comprehensive features on genomic intervals. A fundamental task in a genomic data science project is to extract informative genomic metrics that can predict quantities defined on range-based genomic annotations. In the past, the feature engineering tasks are often handled by a small number of handcrafted genome-derived features and sequence features. However, these methods cannot fully explore the interactive space between genomic regions and different genomic properties, such as the length and sequence contents.
+
+The methods implemented in the predictiveFeatures package can extract a wide range of properties defined on genomic regions, including length, sequence contents, genomic scores, clustering effects, distance toward the 5'/3' ends, and the relative positions of annotation on regions. When extracting genomic features with its main function, various genome properties are interactively extracted from the genomic regions of exons, introns, genes, transcripts, promoters, 5'UTR, 3'UTR, and CDS, establishing a large collection of genome-derived feature set. The input data for predictiveFeatures are any target genome annotation stored in a Granges object. For example, the target can be intervals of peaks or sites obtained by high-throughput sequencing assays (such as par-CLIP, iCLIP, ChIP-Seq, and meRIP-Seq).
+
+Another important question in the analysis of functional genomic data is to identify the genomic factors that are highly correlated to the target, as these factors may be causally linked to the measurement of interest. predictiveFeatures can also offer a catalog of highly interpretive genomic & sequence features, which helps to identify the biologically meaningful factors through the feature importance analysis of the predictive models.
+
+## Quick start
+
+Here we demonstrate the most basic function of gnomic feature extraction. There are variety of bioconductor objects that are necessary to provide annotations if the corresponding property types are required, which we will display in the section bellow. The code chunk below assumes you have a GRanges for your target genomic intervals called `grg`. The `txdb` is a TxDb object for the transcript annotation, here we should use the annotation from the same genome assembly of `grg`. The `bsgemone` and `phastcons` are the reference genome and genome conservation scores, respectively. 
+
+```{r, message=FALSE, warning=FALSE}
+library(predictiveFeatures)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(BSgenome.Hsapiens.UCSC.hg19)
+library(phastCons100way.UCSC.hg19)
+
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+bsgenome <- BSgenome.Hsapiens.UCSC.hg19
+phastcons <- phastCons100way.UCSC.hg19
+
+set.seed(737)
+grg <- GRanges(seqnames = rep(c("chr1", "chr2"), c(5, 15)),
+               ranges = IRanges(c(sample(11874:12127, 5), 
+                                  sample(38814:41527, 15)), 
+                                width=1),
+               strand = Rle(c("+", "-"), c(5, 15)))
+```
+
+
+```{r, message=FALSE, warning=FALSE, results='hide'}
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene #Transcript annotation
+bsgenome <- BSgenome.Hsapiens.UCSC.hg19 #Reference genome
+phastcons <- phastCons100way.UCSC.hg19 #Conservation score
+gfeatures <- genomeDerivedFeatures(x = grg,
+                                   transcriptdb = txdb,
+                                   sequence = bsgenome,
+                                   gscores = phastcons)
+str(gfeatures) #Display the columns (features)
+```
+
+The following additional functions will be explained in the user's guide:
+
+- If you want to extract features from DNA sequences (with *one-hot encoding*, *PseTNC*, ect.) you could store the regions of the DNA sequences into GRanges, and then you can use `sequenceDerivedFeatures()`.
+
+- If you want to introduce mutations such as SNPs into sequence-derived features, which is often used by in-silico mutation analysis, you can use the `mutation` argument in `sequenceDerivedFeatures()`.
+
+- If you want to define other properties over genomic regions, you can use `extractRegionProperty()`.
+
+## Installation
+
+To install *predictiveFeatures* from bioconductor, start R (version >"4.2") and enter:
+
+```{r, eval=FALSE}
+if(!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("predictiveFeatures")
+```
+
+For order versions of R, please refer to the appropriate [Bioconductor release](https://www.bioconductor.org/about/release-announcements/).
+
+```{r,echo=FALSE,cache=FALSE,message=FALSE}
+library(predictiveFeatures)
+library(GenomicRanges)
+```
+
+## Standard workflow
+
+### Reading interval-based annotation from a file
+
+If the target annotation is stored in a *BED*, *GTF*, or *GFF* file, it can be easily loaded into R using the `import()` function in the *rtracklayer* package. The format of the file can be obtained directly from the file extension or manually specified by the `format` argument. The output of `import()` is a *GRanges* object, so it can be directly used as the input of the feature extraction function.
+
+```{r}
+library(rtracklayer)
+## Load the example bed annotation file into R with import function
+bed_dir <- system.file("extdata", "GSE63753.bed", 
+                       package = "predictiveFeatures")
+X <- import(bed_dir)
+```
+
+When loading annotation files saved in other tabular formats, such as *TXT or CSV* files, the table should be first loaded into R using `read.table()` or `read.csv()`. Then, the *GRanges* can be constructed from the loaded *data.frame* using the function `makeGRangesFromDataFrame()` defined in the *GenomicRanges* package. 
+
+The column labeling of the key fields, including the *seqnames* (chromosome info), *start*, *end/width*, and *strand* of the annotation, need to be consistent with the arguments in `makeGRangesFromDataFrame()`. Please see `?makeGRangesFromDataFrame` for the detailed usage if the columns of your *data.frame* are named differently from the default settings.
+
+```{r, message=FALSE, warning=FALSE}
+## Create the annotation Granges using GRanges() function
+library(GenomicRanges)
+tsv_dir <- system.file("extdata", "GSE63753.txt", 
+                       package = "predictiveFeatures")
+X_df <- read.table(tsv_dir, sep = "\t", header = TRUE)
+X <- makeGRangesFromDataFrame(X_df)
+```
+
+### Genome-derived features 
+
+In a standard workflow of *predictiveFeatures*, we will first use the `genomeDerivedFeatures()` function to extract the genome-derived features. In general, the feature matrix returned by the function is encoded by the region properties encoding method described in 1.1.1, and the corresponding regions and properties are extracted from the target annotation objects. The following parts of this section will explain the usage of genome-derived feature extraction.
+
+First, load all the packages required for the feature extraction:
+```{r, message=FALSE, warning=FALSE, cache=FALSE}
+library(predictiveFeatures)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene) ##Txdb for transcript annotation
+library(BSgenome.Hsapiens.UCSC.hg19) ##BSgenome for genome sequence
+library(phastCons100way.UCSC.hg19) ##GScores for genomic scores
+```
+
+We change the variables of the annotation packages into concise names:
+```{r}
+txdb_hg19 <- TxDb.Hsapiens.UCSC.hg19.knownGene
+genome_hg19 <- BSgenome.Hsapiens.UCSC.hg19
+phastCons_hg19 <- phastCons100way.UCSC.hg19
+```
+
+Next, extract of the genome-derived features on the target GRanges object. The detailed structure of each column can be displayed by the `str()` function (not evaluated in the document).
+```{r, eval = FALSE}
+predictiveFeatures <- genomeDerivedFeatures(X,
+                             ## Providing gene annotation
+                             transcriptdb=txdb_hg19,
+                             ## Providing genome sequence
+                             sequence=genome_hg19,
+                             ## Providing Phastcons scores
+                             gscores=phastCons_hg19,
+                             ## Calculate clustering metrics on X itself
+                             clusteringY=X)
+## Display the outcomes of feature extraction
+str(predictiveFeatures)
+```
+
+Table1 summarizes the default genomic regions extracted from the transcript annotation specified by `transcriptdb`:
+
+```{r,fig.align='center',echo=FALSE}
+tb1 <- data.frame(Region = c("Exons","Introns","Exonic 5'UTR", "Full 5'UTR", 
+                       "Exonic CDS", "Full CDS", "Exonic 3'UTR", "Full 3'UTR",
+                       "Exonic Transcript", "Full Transcript", "Exonic Genes", 
+                       "Full Genes", "Promoters"),
+            Description = c("Exons defined in transcriptdb.",
+                    "Intronic parts defined in transcriptdb.",
+                    "The exonic parts of 5'UTR.",
+                    "Full 5'UTR (with introns).",
+                    "The exonic parts of CDS.",
+                    "Full CDS (with introns).",
+                    "The exonic parts of 3'UTR.",
+                    "Full 3'UTR (with introns).",
+                    "Mature RNA transcript.",
+                    "Full transcript (with introns).",
+                    "The exonic parts of genes.",
+                    "Full genes (with introns).",
+                    "Promoter regions of transcripts."))
+
+knitr::kable(tb1, caption = "Default genomic regions extracted from transcriptdb")
+```
+
+Subsequently, Table 2 lists the properties calculated from the genomic regions defined above. 
+```{r,fig.align='center',echo=FALSE}
+tb1 <- data.frame(Property = c("Length","Sequence content","Genomic scores","Count of Y", "Density of Y", "Nearest distance to Y", 
+                       "Relative position", "Distance to 5'end", "Distance to 3'end"),
+            Description = c("Region length.",
+                            "Sequence content of the region (default GC content).",
+                            "Average genomic scores of the region.",
+                            "Count of the overlapped annotation Y on region.",
+                            "Density of the overlapped annotation Y on region.",
+                            "Nearest distance from the region to annotation Y.",
+                            "Relative position of X on the region.",
+                            "Distance of X to region's 5'end.",
+                            "Distance of X to region's 3'end."))
+
+knitr::kable(tb1, caption = "Properties calculated from the genomic regions")
+```
+
+All of the gene regions listed in Table 1 are computed using the functions defined in the package `GenomicFeatures`. By default, the promoters obtained are the upstream 2000bp and downstream 200bp of the transcription start sites (TSS).
+
+The density of $Y$ (The clustering genomic annotation) on the region is defined as: 
+$$\text{Density of Y on region} =  \frac{\text{Count of Y on region}}{\text{Region length}}$$
+The relative position of $X$ on the region is defined as:
+
+$$\text{Relative position of X on region} =  \frac{\text{Distance of X toward region's 5'end}}{\text{Region length}}$$
+The sequence content calculated by default is the GC content. Under the argument setting used in the above example, the genomic scores used is the PhastCons scores of hg19. 
+
+In the example above, we used $\text{Y} = \text{X}$ to calculate the properties related to the clustering effect on the genome coordinate, including the count of Y, the density of Y, and the nearest distance to Y. That is, in our case, these properties are used to quantify the self clustering potential of the target annotation. 
+
+Finally, other than the properties described in Table 2, the function will also generate 3 additional features to describe the unique biological properties of the region type of exonic genes: gene's exon number, gene's transcript isoform number, and Meta-TX topology. Among them, the Meta-TX topology is calculated by the following equation:
+$$\text{Meta-tx topology} =  \frac{1}{3} \times(\text{Pos(5'utr)}\mathbf{1}(\text{5'utr})+(1+\text{Pos(cds)})\mathbf{1}(\text{cds}) + (2+\text{Pos(3'utr)})\mathbf{1}(\text{3'utr}))$$
+$\text{Pos}(\text{region})$ is the relative position of the target in the corresponding region (as defined above); $\mathbf{1}(\text{region})$ is an indicator function for the target overlaps the region.  $\mathbf{1}(\text{region})=1$ if the target overlaps the region, otherwise $\mathbf{1}(\text{region})=0$. The Meta-TX topology is a simplified version of the transcript distribution described in the guitar package [2] and the Meta-TX method [3].
+
+### Sequence-derived features
+
+The information derived from nucleotide sequences are often the most fundamental features when building prediction models for the genome annotations, and it is recommended to combine both the sequence and genome derived features to achieve the highest model performance in any genomic data science projects.
+
+*predictiveFeatures* implemented different sequence encoding methods in function `sequenceDerivedFeatures()`; the function can extract the features under the given encoding schema directly from the genomic intervals defined in GRanges object. In order to generate a complete feature matrix in the output, the input GRanges of `sequenceDerivedFeatures()` are required have the same width/length. Therefore, when extracting sequence features, it is recommended to use the `resize()` function to fix the size of the annotation object.
+
+We first define the range of sequence extraction as 41bp windows centered on the target annotation. Since the ranges in the original annotation are single based modification sites, resizing is equivalent to adding 20bp flanking regions on both sides of the sites.
+
+```{r}
+X_resized <- resize(X, 41, fix = "center") 
+```
+
+The sequence features of One-hot encoding can be extracted with:
+```{r}
+Onehot_SF <- sequenceDerivedFeatures(X_resized,
+                                     sequence=genome_hg19,
+                                     encoding = "onehot")
+str(Onehot_SF)
+```
+
+Alternatively, extract the sequence features of PseTNC [1] encoding with:
+```{r}
+PseTNC_SF <- sequenceDerivedFeatures(X_resized,
+                                     sequence=genome_hg19,
+                                     encoding = "iRNA")
+str(PseTNC_SF)
+```
+
+# Make Regions from New Sources
+
+The genomic regions used when extracting genome-derived features can be replaced and expanded to further enlarge the feature space explored by the region properties encoding. For example, since the number of transcripts contained in the Ensemble database is more than twice that of UCSC, we can replace *TxDb* with *ensembldb* in the transcript annotation input.
+
+## Utilize the Ensembl database
+
+To work with transcript annotation from Ensembl, we first need to install/load the EnsDb data package corresponding to the genome version of the target annotation. The target in the example comes from hg19, so the v75 of the Human annotation on Ensembl will be used. 
+```{r}
+library(EnsDb.Hsapiens.v75)
+ensdb_hg19 <- EnsDb.Hsapiens.v75
+```
+
+The loaded *ensembldb* package can directly substitute the *TxDb* package at the `transcriptdb` argument:
+```{r, eval=FALSE}
+## Extract region properties using the annotation of Ensemble database
+predictiveFeatures <- genomeDerivedFeatures(X,
+                             transcriptdb=ensdb_hg19,
+                             sequence=genome_hg19,
+                             gscores=phastCons_hg19,
+                             clusteringY=X)
+
+str(predictiveFeatures)
+```
+Now, the region properties features returned are based on the transcriptomic regions from Ensembl database.
+
+## Self-defined regions to extract properties
+
+All of the above examples operate on the 13 basic types of gene regions (listed on Table 2). However, depending on the biological nature of the target of interest, genomic regions other than gene/transcript annotations may contain critical information for modeling. For example, some RNA binding proteins realize their functions through regulating the RNA secondary structures [7], and epigenetic modifications often directly regulate the chromosome structures [8]. In case of constructing high-performance predictors on these targets, additional regions can be defined using the interval based annotations of RNA secondary structures and chromosomal conformations.
+
+*predictiveFeatures* support the extraction of properties over an arbitrary set of genomic regions defined in the *GRanges* or *GRangesList* class. The example below adds tRNA on h19 as the additional region for the feature extraction. The GRanges for tRNA can be extracted from the Txdb object of hg19.
+
+```{r}
+tRNAs_hg19 <- tRNAs(txdb_hg19)
+```
+
+Next, we provide the additional annotation at the argument `extraRegions`:
+```{r, eval=FALSE}
+predictiveFeatures <- genomeDerivedFeatures(X,
+                             transcriptdb=txdb_hg19,
+                             sequence=genome_hg19,
+                             gscores=phastCons_hg19,
+                             clusteringY=X,
+                             extraRegions=list(tRNA=tRNAs_hg19))
+
+str(predictiveFeatures)
+```
+
+Then, the tRNA related features will be extracted in additional to the 14 basic region types, and all properties described in 1.1.1 will be applied to the newly provided region. Please also note that the input for `extraRegions` can be a *list* of *GRanges* or *GRangesList*. The region type features will be interactively retrieved for each element of the list. Meanwhile, the extracted new features will be labeled, as shown in the column headers of the returned table, by the **names** of the list.
+
+# More Feature Engineering Options
+
+*predictiveFeatures* offers separate feature extraction functions for end-users who want to deign their own region properties. In general, these functions enable the extraction of one feature at a time given a region object and a specific metric of interest.
+
+## Design novel genome-derived region properties
+
+The example below demonstrates the extraction of single genome-derived features from a randomly sampled query *GRanges* on the exons of hg19 genome. 
+
+Firstly, we will build the query *GRanges* object using:
+```{r}
+library(GenomicRanges)
+x_gr <- GRanges(rep(c("chr1", "chr2"), c(5, 15)),
+                IRanges(c(sample(11874:12127, 5), 
+                          sample(38814:41527,15)), width=100),
+                strand=Rle(c("+", "-"), c(5, 15)))
+x_gr    
+```
+
+Next, we manually specify the 3 exons of human genome as region object, and then re-structure the *GRanges* into *GRangesList* to create a list of 2 elements representing 2 genes:
+```{r}
+exons_gr <- GRanges(c("chr1","chr2","chr2"),
+                    IRanges(start=c(11874,38814,45440),
+                            end=c(12227,41627,46588)),
+                     strand=c("+","-","-"))
+genes_grl <- GRangesList(gene1=exons_gr[1],gene2=exons_gr[c(2,3)])        
+```
+
+Then, we use the function extractRegionLength along with the query to extract the lengths of GRanges:
+```{r}
+extractRegionLength(x_gr)
+```
+
+When adding `region=exon_gr`, the length of the regions (exons) defined in the region will be extracted, and the mapping is determined by the overlap relationships between query and exons.
+```{r} 
+extractRegionLength(x_gr, region=exons_gr)
+```
+
+Similarly, the region can be a `GRangesList`, in which the following case will extract the exonic length of the genes overlapped by the query.
+```{r}
+extractRegionLength(x_gr, region=genes_grl)
+```
+
+Self defined properties can be specified as a numeric vector with the same length of the region object, and the returned value is a vector that map the properties value from the region to the query.
+```{r}
+exons_property <- c(1,6,8)
+extractRegionProperty(x_gr, region=exons_gr, property=exons_property)
+```
+
+Furthermore, predictiveFeatures defined property extractors that act on the genome sequence and genome score packages.
+```{r}
+library(BSgenome.Hsapiens.UCSC.hg19)
+bsgenome <- BSgenome.Hsapiens.UCSC.hg19
+```
+
+`extractRegionLetterFrequency()` can be used to access to GC content of the query GRanges.
+```{r}
+extractRegionLetterFrequency(x_gr, 
+                             sequence=bsgenome, 
+                             letters="GC")
+```
+
+By passing different DNA string to the letters argument, one can calculate other sequence content (e.x. "A content") from x.
+```{r}
+extractRegionLetterFrequency(x_gr, 
+                             region=exons_gr,
+                             sequence=bsgenome, 
+                             letters="A")
+```
+
+After providing the argument region, the sequence contents are now calculated for the indiviual regions, and then mapped to the corresponding query overlapped.
+```{r}
+extractRegionLetterFrequency(x_gr, 
+                             region=exons_gr,
+                             sequence=bsgenome, 
+                             letters="GC")
+```
+
+The individual properties extractors constitute the fundamental building blocks of the region properties features extracted by the one-step function. The major utility of the individual functions is to enable users to annotate their newly defined properties with the function `extractRegionProperty()`. In the later versions of predictiveFeatures, more genomic metrics will be constructed to enrich the set of properties available for predictiveFeatures.
+
+## Extracting topologies on transcript 
+
+The distribution of genomic markers on transcript coordinate (Travis coordinate) can often provide insight into its biological functions. Usually, such distribution plot along is drawn by an individual package (such as the Guitar bioconductor package). The relative position on transcript coordinate can be highly important for the modeling of RNA related molecular targets such as the m6A modification on messenger RNA [5]. 
+
+*predictiveFeatures* export a single function `topologyOnTranscripts()` to provide a fast extraction of transcript topology from query GRanges annotation. The required input is the *GRanges* and the corresponding *TxDb* object. The following example uses the annotation of the m6A miCLIP dataset; while positive sites are single based m6A modification sites (restricted on DRACH motif), and the negative sites are randomly sampled DRACH motifs from the exonic transcripts containing the positive sites.
+
+```{r,eval=TRUE,cache=FALSE,fig.align='left',message=FALSE}
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+
+## Load the exemplar annotation of m6A miCLIP dataset
+GSE63753_sysy <- readRDS(system.file("extdata", "GSE63753_sysy.rds", 
+                                     package = "predictiveFeatures"))
+
+GSE63753_sysy$topology <- topologyOnTranscripts(GSE63753_sysy, txdb)
+```
+
+Next, after extracting the topology of the data set on transcript, we can plot the relationship between the meta-tx toplogy and the binary target using logistic regression. Such plot can be quickly implemented with the `geom_smooth()` function defined in package *ggplot2*. Smoothing splines are applied so that the smoothed logistic regression curve can reflect the non-linear effect of transcript topology on the target outcome (in this case, the m6A modification site).
+
+```{r,eval=TRUE,cache=FALSE,fig.align='left'}
+library(ggplot2)
+ggplot(na.omit(as.data.frame(mcols(GSE63753_sysy))), aes(topology, target)) +
+  geom_smooth(
+    formula = y~splines::ns(x, 8),
+    method = "glm",
+    method.args = list(family = "binomial")
+  ) +
+  geom_vline(xintercept = c(0.33, 0.66), linetype = 2) +
+  geom_hline(yintercept = 0.5, linetype = 3) +
+  geom_text(aes(x = x, y = y, label = text),
+    data = data.frame(
+      x = c(0.165, 0.495, 0.825),
+      y = c(0.1, 0.1, 0.1),
+      text = c("5'UTR", "CDS", "3'UTR")
+    )) + scale_x_continuous(breaks = c(0, 0.33, 0.66, 0.9)) +
+         scale_y_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1)) +
+  theme_classic() + labs(x = "meta-tx topology", 
+                         y = "prob of m6A = 1",
+                         title = "LR fit with cubic splines")
+```
+
+Please note that the interpretation plot generated by this approach only demonstrates the marginal effect of genome-derived features on the prediction of its target. In practice, modeling is usually performed with more than one feature, and its prediction may rely on the interactions between multiple features. However, such single feature LR curve is still useful for EDA, and the pattern of non-linear effects may gain useful insight for the genome-derived feature in relation to the target.
+
+## Other features from transcript databases
+
+The transcript databases often contain other biologically important information that is not limited to the region$*$properties format, examples of these features include chromosomal information and the gene/transcript biotypes. *predictiveFeatures* allows to extract those annotations that beyond the encoding schema of the region properties features. 
+
+If the *EnsDb* object is provided in the `transcriptdb` of `genomeDerivedFeatures()`, the **transcript biotype** included in the ensembleDb can be automatically retrieved as the additional columns of the feature matrix when adding `annotBiotype=TRUE`. In addition, by setting the `annotSeqnames=TRUE`, the function will further extract the *seqnames* of the targets which mapped to the *seqlevels* of the provided *transcriptdb*.  
+
+```{r, eval=FALSE}
+library(EnsDb.Hsapiens.v75)
+## Generate additional features of seqnames and transcript biotype
+predictiveFeatures <- genomeDerivedFeatures(X,
+                             transcriptdb=EnsDb.Hsapiens.v75,
+                             sequence=BSgenome.Hsapiens.UCSC.hg19,
+                             gscores=phastCons100way.UCSC.hg19,
+                             clusteringY=X,
+                             annotSeqnames=TRUE,
+                             annotBiotype=TRUE)
+```
+
+# Case Studies
+
+The case introduced below use the miCLIP data generated in Linder *et al*. [4]. The single based resolution m6A sites are publicly available from the Gene Expression Omnibus (GEO) at the accession number GSE63753. The study examines the base resolution m6A modification sites in human and mouse with different antibodies and site calling methods. Here, we attempt to build a prediction model to classify the human m6A modification (identified using the Abcam antibody) from a set of negative DRACH sites. The positive sites are filtered by the miCLIP sites that mapped to the exons and the DRACH motif, and the negative sites are randomly sampled unmethylated DRACH motifs from the exonic regions of the transcripts that contain the positive data. The number of negative sampled is equal to the number of positives so that the classification data set is balanced.
+
+## Setup and EDA
+
+We first load the packages for sequence, transcript annotation, and the genomic conservation scores on hg19:
+```{r, warning=FALSE, message=FALSE,fig.align='left'}
+library(predictiveFeatures)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene) 
+library(BSgenome.Hsapiens.UCSC.hg19) 
+library(phastCons100way.UCSC.hg19)
+
+txdb_hg19 <- TxDb.Hsapiens.UCSC.hg19.knownGene
+genome_hg19 <- BSgenome.Hsapiens.UCSC.hg19
+phastCons_hg19 <- phastCons100way.UCSC.hg19
+```
+
+Next, load the GRanges of the m6A miCLIP data prepared for classification modeling:
+```{r, cache=FALSE}
+GSE63753_abcam <- readRDS(system.file("extdata", 
+                          "GSE63753_abcam.rds", 
+                          package = "predictiveFeatures"))
+
+GSE63753_abcam
+table(GSE63753_abcam$target)
+```
+
+The metadata column of the GRanges is a dummy (0/1) vector, 1 is the positive m6A site, and 0 is the negative DRACH motif. The negative data is randomly sampled from the regions of positive containing transcript, and the negative sampling function used is `sampleSequence()`, which can sample ranges of a given sequence motif from any region of a genome. Please, see `?sampleSequence()` for more illustrations on this task, as the correct sampling of negative data is often crucial for the success of a data science project in genomics.
+
+Prior to the feature extraction and model training process, we could first examine the relationship between exon length and m6A modification, which is previously reported by numerous studies [5,6]. 
+
+```{r, cache=FALSE, warning=FALSE, message=FALSE}
+## Extract exon length overlapped by the DRACH sites:
+GSE63753_abcam$exon_length <- extractRegionLength(GSE63753_abcam, 
+                                                  exons(txdb_hg19))
+```
+
+We will first visualize the joint distribution by plotting the densities of exon length stratified by the m6A labeling:
+```{r, cache=FALSE, warning=FALSE, message=FALSE,fig.align='left'}
+library(ggplot2)
+plot_df <- na.omit(as.data.frame(mcols(GSE63753_abcam)))
+                   
+## Plot the distribution of exon length conditioned by labels:
+ggplot(plot_df) + 
+  geom_density(aes(x=log(exon_length),
+                   fill = as.factor(target)), 
+               alpha = 0.3) + theme_classic() 
+```
+
+Next, we will visualize the conditional distribution by fitting the smoothed logistic regression using the exon length as covariate:
+```{r, cache=FALSE, warning=FALSE, message=FALSE, fig.align='left'}
+## Plot the logistic regression fit with cubic splines:
+ggplot(plot_df, aes(log(exon_length), target)) +
+  geom_smooth(formula = y ~ splines::ns(x, 3), 
+              method = "glm", method.args = list(family = "binomial"),
+              color = "dark blue") + 
+  geom_hline(yintercept = 0.5, linetype = 3) + 
+  scale_x_continuous(limits = c(4,9)) +
+  scale_y_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1)) +
+  theme_classic() + labs(x = "log(length of exon)",
+                         y = "prob of m6A = 1", 
+                         title = "LR fit with cubic splines")
+```
+
+With the help of B-splines, we could clearly see that the effect of exon length on the probability of the m6A modification is not linear. In other words, although the m6A is more likely to be seen in the longer exons. However, if the exon length is too long, it becomes less probable to be methylated compared to the medium-length exons. 
+
+Following that, the region properties features and the sequence features are extracted from the target annotation. This time, the clustering related properties are calculated with all DRACH motifs on the exonic regions of hg19. The inputs for *gscores* and *clusteringY* are now wrapped in a `list` in order to label the corresponding features with the names of the list elements.
+
+```{r, cache=FALSE, eval=FALSE}
+## Retrieve all DRACH motif on the exon regions of hg19
+exons_DRACH <- sampleSequence("DRACH", exons(txdb_hg19), genome_hg19)
+
+RPF <- genomeDerivedFeatures(GSE63753_abcam,
+                             transcriptdb=txdb_hg19,
+                             sequence=genome_hg19,
+                             gscores=list(phastCons=phastCons_hg19),
+                             clusteringY=list(motif=exons_DRACH))
+
+PseTNC <- sequenceDerivedFeatures(resize(GSE63753_abcam, 41, fix="center"),
+                                  ## Providing the genome sequence
+                                  sequence=genome_hg19,
+                                  encoding = "iRNA")
+```
+
+Then, we can concatenate the 2 feature matrices and use machine learning packages to build the prediction models. It is recommended to firstly use the feature importance metrics from XGBoost to conduct backward feature selection, and then use the more advanced machine learning approaches to enhance the model performance. 
+
+A good criteria for evaluating the overall effectiveness of the feature design is AutoML implemented by h2o package, since one can focus on improving the performance of AutoML without the need of choosing the hyper-parameters. 
+
+The vignette was built on:
+```{r, echo=FALSE}
+if (require(sessioninfo)) {
+sI <- sessioninfo::session_info()
+print(sI)
+}
+```
+
+
+# References
+1. Chen, Wei, et al. "iRNA-Methyl: Identifying N6-methyladenosine sites using pseudo nucleotide composition." Analytical biochemistry 490 (2015): 26-33.
+2. Cui, Xiaodong, et al. "Guitar: an R/Bioconductor package for gene annotation guided transcriptomic analysis of RNA-related genomic features." BioMed research international 2016 (2016).
+3. Wang, Yue, et al. "MetaTX: deciphering the distribution of mRNA-related features in the presence of isoform ambiguity, with applications in epitranscriptome analysis." Bioinformatics (2020).
+4. Linder, Bastian, et al. "Single-nucleotide-resolution mapping of m6A and m6Am throughout the transcriptome." Nature methods 12.8 (2015): 767-772.
+5. Chen, Kunqi, et al. "WHISTLE: a high-accuracy map of the human N 6-methyladenosine (m6A) epitranscriptome predicted using a machine learning approach." Nucleic acids research 47.7 (2019): e41-e41.
+6. Dominissini, Dan, et al. "Topology of the human and mouse m6A RNA methylomes revealed by m 6 A-seq." Nature 485.7397 (2012): 201-206.
+7. Li, X., Quon, G., Lipshitz, H. D., & Morris, Q. (2010). Predicting in vivo binding sites of RNA-binding proteins using mRNA secondary structure. Rna, 16(6), 1096-1107.
+8. MacPherson, Q., Beltran, B., & Spakowitz, A. J. (2018). Bottom–up modeling of chromatin segregation due to epigenetic modifications. Proceedings of the National Academy of Sciences, 115(50), 12739-12744.

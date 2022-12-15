@@ -1,0 +1,14 @@
+# GSE63753_abcam.rds
+The file contains a GRanges object storing a classification dataset for predicting the single-based m6A location obtained from a miCLIP experiment. The type of antibody used is abcam, and the data processing pipeline is CIMS. The positive data of the GRanges (with metadata column
+'target' = 1) was imported from the BED file `GSE63753_hek293.abcam.CIMS.m6A.9536.bed.txt.gz` in the supplementary files of Series GSE63753 of Gene Expression Omnibus. The negative ranges (with metadata column 'target=0') is randomly sampled from the DRACH motif on the exonic transcripts containing the positive data. The number of positive and negative ranges are ballanced. 
+
+# GSE63753_sysy.rds
+
+The file contains a GRanges object storing a classification dataset for predicting the single-based m6A location obtained from a miCLIP experiment. The type of antibody used is sysy, and the data processing pipeline is CITS. The positive data of the GRanges (with metadata column
+'target' = 1) was imported from the BED file `GSE63753_hek293.sysy.CITS.m6A.12051.bed.gz` in the supplementary files of Series GSE63753 of Gene Expression Omnibus. The negative ranges (with metadata column 'target=0') is randomly sampled from the DRACH motif on the exonic transcripts containing the positive data. The number of positive and negative ranges are ballanced. 
+
+# GSE63753.txt
+The file is a table in tab delimitated values (TSV) format saved from the positive data within the Granges of 'GSE63753_sysy.rds', i.e. only the ranges with target == 1 are retained in this file.
+
+# GSE63753.bed
+The BED file is saved from the positive data within the Granges of 'GSE63753_sysy.rds' using the export function in packager rtracklayer. 
