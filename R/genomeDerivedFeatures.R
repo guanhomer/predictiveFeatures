@@ -781,7 +781,7 @@ genomeDerivedFeatures <- function(x,
   message(
     "#############################################################################################################################################\n"
   )
-  message("##                                      The generation of region properties features has been completed.                                   ##\n")
+  message("##                                      The generation of genomic predictive features has been completed.                                 ##\n")
   message(
     "#############################################################################################################################################\n"
   )
