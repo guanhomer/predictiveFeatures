@@ -7,7 +7,7 @@ Authors@R: person("Zhen", "Wei", email = "zhen.wei10@icloud.com",
 Description: Extract predictive genome-derived features from genomic regions. predictiveFeatures aims to facilitate the feature engineering process for predictive modeling of genomic data. The package can enumerate a large number of genomic features through the combinations between genomic properties (e.g., length, sequence contents, clustering metrics, conservation scores, distance toward ends, ect.) and genomic regions (e.g. exons, introns, promoters, transcripts, genes, 5'UTR, CDS, 3'UTR ect.). Compared with only using the sequence-derived features, adding comprehensive features of region properties can significantly improve the predictive performance over various end applications in genomics. In addition, the interpretations of regional properties are highly intuitive, so that the biological insights can be easily derived through the feature importance analysis.
 License: Artistic-2.0
 Imports: BiocGenerics, Biostrings, GenomeInfoDb, GenomicRanges, GenomicScores, BSgenome, IRanges, ensembldb, matrixStats, methods, GenomicFeatures, gtools, stats, S4Vectors, utils
-Depends: R (>= 4.1)
+Depends: R (>= 4.0)
 Suggests: knitr, rmarkdown, ggplot2, rtracklayer, BSgenome.Hsapiens.UCSC.hg19, TxDb.Hsapiens.UCSC.hg19.knownGene, phastCons100way.UCSC.hg19, EnsDb.Hsapiens.v75, FDb.UCSC.tRNAs
 VignetteBuilder: knitr
 Encoding: UTF-8
