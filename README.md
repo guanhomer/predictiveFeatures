@@ -48,6 +48,7 @@ Installation from github can be initiated with the following command:
 ``` r
 if (!requireNamespace("remotes", quietly = TRUE))
     install.packages("remotes")
+    
 remotes::install_github("zw-xjtlu/predictiveFeatures")
 ```
 
