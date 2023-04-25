@@ -1,7 +1,7 @@
 Package: predictiveFeatures
 Type: Package
 Title: Extraction of Predictive Features from Interval-based Genomic Data
-Version: 0.99.94
+Version: 0.99.95
 Authors@R: person("Zhen", "Wei", email = "zhen.wei10@icloud.com",
                   role = c("aut", "cre"))
 Description: Extract predictive genome-derived features from genomic regions. predictiveFeatures aims to facilitate the feature engineering process for predictive modeling of genomic data. The package can enumerate a large number of genomic features through the combinations between genomic properties (e.g., length, sequence contents, clustering metrics, conservation scores, distance toward ends, ect.) and genomic regions (e.g. exons, introns, promoters, transcripts, genes, 5'UTR, CDS, 3'UTR ect.). Compared with only using the sequence-derived features, adding comprehensive features of region properties can significantly improve the predictive performance over various end applications in genomics. In addition, the interpretations of regional properties are highly intuitive, so that the biological insights can be easily derived through the feature importance analysis.
