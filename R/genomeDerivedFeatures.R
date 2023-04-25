@@ -720,10 +720,24 @@ genomeDerivedFeatures <- function(x,
   message(
     "## --------------------------------------------------------------------------------------------------------------------------------------- ## \n"
   )
-  message("##                                                Extracting meta-genomic statistics                                                       ## \n")                                              ##\n")
+  message("##                                                Extracting other genomic metrics                                                         ## \n")                                              ##\n")
   message(
     "## --------------------------------------------------------------------------------------------------------------------------------------- ## \n"
   )
+  
+  introns <- EnsureUCSC(unlist(intronsByTranscript(transcriptdb)), x)
+  Message_i("log2_NearestDistToJunction",
+            "log2(nearest distance to splicing junctions + 1)",
+            message_env)
+  NearestDistToJunction <- rep(NA, length(x))
+  introns <- unlist(intronsByTranscript(txdb))
+  dnn <- distanceToNearest(x, c(resize(introns, 1, "start"), resize(introns, 1, "end")))
+  NearestDistToJunction[queryHits(dnn)] <- mcols(dnn)$distance
+  X[["log2_NearestDistToJunction"]] <- log2(
+  NearestDistToJunction + 1
+  )
+  message("Done")
+  rm(introns, dnn, NearestDistToJunction)
   
   exbg <- EnsureUCSC(exonsBy(transcriptdb, "gene"), x)
   Message_i("log2_GeneExonNumber",
@@ -1288,9 +1302,9 @@ calculate_total <- function(transcriptdb,
     (14 + length(extraRegions)) * (2 + I_genome + s_num + 3 * c_num + 3)
   if (annotBiotype & is(transcriptdb, "EnsDb")) {
     additional_feature_num <-
-      3 + length(unique(transcripts(transcriptdb)$tx_biotype))
+      4 + length(unique(transcripts(transcriptdb)$tx_biotype))
   } else{
-    additional_feature_num <- 3
+    additional_feature_num <- 4
   }
   return(self_feature_num + region_feature_num + additional_feature_num)
 }
