@@ -54,18 +54,13 @@ remotes::install_github("zw-xjtlu/predictiveFeatures")
 
 ## Quick start
 
-Here we demonstrate the most basic function of gnomic feature extraction. There are variety of bioconductor objects that are necessary to provide annotations if the corresponding property types are required, which we will display in the section bellow. The code chunk below assumes you have a GRanges for your target genomic intervals called `grg`. The `txdb` is a TxDb object for the transcript annotation, here we should use the annotation from the same genome assembly of `grg`. The `bsgemone` and `phastcons` are the reference genome and genome conservation scores, respectively. 
-
+Here we demonstrate the most basic function of gnomic feature extraction. There are variety of bioconductor objects that are necessary to provide annotations if the corresponding property types are required, which we will display in the section bellow. The code chunk below assumes you have a GRanges for your target genomic intervals called `grg`. The `txdb` is a TxDb object for the transcript annotation, here we should use the annotation from the same genome assembly of `grg`. 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(predictiveFeatures)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
-library(BSgenome.Hsapiens.UCSC.hg19)
-library(phastCons100way.UCSC.hg19)
 
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene 
-bsgenome <- BSgenome.Hsapiens.UCSC.hg19
-phastcons <- phastCons100way.UCSC.hg19 
 
 set.seed(737)
 grg <- GRanges(seqnames = rep(c("chr1", "chr2"), c(5, 15)),
@@ -75,9 +70,7 @@ grg <- GRanges(seqnames = rep(c("chr1", "chr2"), c(5, 15)),
                strand = Rle(c("+", "-"), c(5, 15)))
               
 gfeatures <- genomeDerivedFeatures(x = grg,
-                                   transcriptdb = txdb,
-                                   sequence = bsgenome,
-                                   gscores = phastcons)
+                                   transcriptdb = txdb)
                                    
 str(gfeatures) #Display the columns (features)
 ```
