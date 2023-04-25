@@ -46,7 +46,9 @@ Feature extraction framework of predictiveFeatures
 Installation from github can be initiated with the following command:
 
 ``` r
-devtools::install_github("zw-xjtlu/predictiveFeatures")
+if (!requireNamespace("remotes", quietly = TRUE))
+    install.packages("remotes")
+remotes::install_github("zw-xjtlu/predictiveFeatures")
 ```
 
 Alternatively, it can be downloaded from bioconductor with:
