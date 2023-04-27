@@ -15,7 +15,7 @@
 #' For the overlapping features, as long as x overlaps any range of the region, the returned value is 1 .
 #'
 #' If \code{ambiguityMethod} is \code{"mean"}, \code{"sum"}, \code{"min"}, or \code{"max"}, then the mean, sum, minimum, and maximum values of the >1 mapping will be returned.
-#' @param nomapValue When \code{nomapValue} is \code{"NA"} or \code{"0"}, the \code{x} that do not match the region will return \code{NA} and \code{0} respectively.
+#' @param nomapValue When \code{nomapValue} is \code{"NA"} or \code{"zero"}, the \code{x} that do not match the region will return \code{NA} and \code{0} respectively.
 #'
 #' If \code{nomapValue} is \code{"nearest"}, the not matched \code{x} will be set to be the properties on its nearest region.
 #'
@@ -130,7 +130,7 @@ genomeDerivedFeatures <- function(x,
                                   extraRegions = NULL,
                                   flankSizes = (25 * 2 ^ (0:6)),
                                   ambiguityMethod = c("auto", " mean", "sum", "min", "max"),
-                                  nomapValue = c("0", "NA", "nearest"),
+                                  nomapValue = c("zero", "NA", "nearest"),
                                   annotSeqnames = FALSE,
                                   annotBiotype = FALSE) {
   ambiguityMethod <- match.arg(ambiguityMethod)
@@ -733,6 +733,9 @@ genomeDerivedFeatures <- function(x,
   introns <- unlist(intronsByTranscript(txdb))
   dnn <- distanceToNearest(x, c(resize(introns, 1, "start"), resize(introns, 1, "end")))
   NearestDistToJunction[queryHits(dnn)] <- mcols(dnn)$distance
+  if(nomapValue == "zero") { 
+    NearestDistToJunction[is.na(NearestDistToJunction)] <- 0 
+    }
   X[["log2_NearestDistToJunction"]] <- log2(
   NearestDistToJunction + 1
   )
@@ -806,7 +809,7 @@ EnumerateRegionFeatures <- function(x,
                                     clusteringY = NULL,
                                     flankSizes = (25 * 2 ^ (0:6)),
                                     ambiguityMethod = c("auto", "mean", "sum", "min", "max"),
-                                    nomapValue = c("0", "NA", "nearest"),
+                                    nomapValue = c("zero", "NA", "nearest"),
                                     message_env) {
   ambiguityMethod <- match.arg(ambiguityMethod)
   nomapValue <- match.arg(nomapValue)
