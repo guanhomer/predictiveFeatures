@@ -808,7 +808,11 @@ setMethod("extractRegionRelativePosition",
             stopifnot(is(x, "GRanges"))
             ambiguityMethod <- match.arg(ambiguityMethod)
             nomapValue <- match.arg(nomapValue)
-            nomapValue <- eval(parse(text = nomapValue))
+            if(nomapValue == NA){
+              nomapValue <- NA
+            }else{
+              nomapValue <- 0
+            }
             
             if (is.null(region)) {
               rrp_property <- rep(nomapValue, length(x))
