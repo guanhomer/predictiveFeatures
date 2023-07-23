@@ -730,7 +730,7 @@ genomeDerivedFeatures <- function(x,
             "log2(nearest distance to splicing junctions + 1)",
             message_env)
   NearestDistToJunction <- rep(NA, length(x))
-  introns <- unlist(intronsByTranscript(txdb))
+  introns <- unlist(intronsByTranscript(transcriptdb))
   dnn <- distanceToNearest(x, c(resize(introns, 1, "start"), resize(introns, 1, "end")))
   NearestDistToJunction[queryHits(dnn)] <- mcols(dnn)$distance
   X[["log2_NearestDistToJunction"]] <- log2(
