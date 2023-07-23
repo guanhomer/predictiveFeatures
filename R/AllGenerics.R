@@ -13,7 +13,7 @@
 #' 
 #' @param maxgap,minoverlap,type See \code{?\link{findOverlaps}} in the \bold{IRanges} package for a description of these arguments. 
 #' 
-#' @param nomapValue When \code{nomapValue} is \code{"NA"}, \code{"0"}, or \code{"FALSE"}, 
+#' @param nomapValue When \code{nomapValue} is \code{"NA"}, \code{"zero"}, or \code{"FALSE"}, 
 #' the \code{x} that do not match the \code{region} will return \code{NA}, \code{0}, and \code{FALSE} respectively.
 #' If \code{nomapValue} is \code{"nearest"}, the not matched \code{x} will be set to be the property value on its nearest \code{region}.
 #'
@@ -54,7 +54,7 @@ setGeneric("extractRegionProperty", function(x,
                                              maxgap=0L, 
                                              minoverlap=0L,
                                              type=c("any", "start", "end", "within", "equal"),
-                                             nomapValue=c("NA","0","FALSE","nearest"),
+                                             nomapValue=c("NA","zero","FALSE","nearest"),
                                              ignore.strand=FALSE){standardGeneric("extractRegionProperty")})
 
 #' Method extractRegionOverlap
@@ -78,7 +78,7 @@ setGeneric("extractRegionLength", function(x,
                                            maxgap=-1L, 
                                            minoverlap=0L,
                                            type=c("any", "start", "end", "within", "equal"),
-                                           nomapValue=c("NA","0","nearest"),
+                                           nomapValue=c("NA","zero","nearest"),
                                            ignore.strand=FALSE){standardGeneric("extractRegionLength")})
 
 #' Method extractRegionLetterFrequency
@@ -93,7 +93,7 @@ setGeneric("extractRegionLetterFrequency", function(x,
                                                     maxgap=-1L, 
                                                     minoverlap=0L,
                                                     type=c("any", "start", "end", "within", "equal"),
-                                                    nomapValue=c("NA","0","nearest"),
+                                                    nomapValue=c("NA","zero","nearest"),
                                                     ignore.strand=FALSE,
                                                     efficient=TRUE,
                                                     ...){standardGeneric("extractRegionLetterFrequency")})
@@ -108,7 +108,7 @@ setGeneric("extractRegionScores", function(x,
                                            maxgap=-1L, 
                                            minoverlap=0L,
                                            type=c("any", "start", "end", "within", "equal"),
-                                           nomapValue=c("NA","0","nearest"),
+                                           nomapValue=c("NA","zero","nearest"),
                                            missingScores=c("zero", "mean", "none"),
                                            ignore.strand=FALSE,
                                            efficient=TRUE,
@@ -126,7 +126,7 @@ setGeneric("extractRegionYCount", function(x,
                                            maxgap=-1L, 
                                            minoverlap=0L,
                                            type=c("any", "start", "end", "within", "equal"),
-                                           nomapValue=c("NA","0","nearest"),
+                                           nomapValue=c("NA","zero","nearest"),
                                            ignore.strand=FALSE,
                                            efficient=TRUE){standardGeneric("extractRegionYCount")})
 
@@ -141,7 +141,7 @@ setGeneric("extractRegionNearestDistToY", function(x,
                                                    maxgap=-1L, 
                                                    minoverlap=0L,
                                                    type=c("any", "start", "end", "within", "equal"),
-                                                   nomapValue=c("NA","0","nearest"),
+                                                   nomapValue=c("NA","zero","nearest"),
                                                    maxDist=3e6,
                                                    ignore.strand=FALSE){standardGeneric("extractRegionNearestDistToY")})
 
@@ -151,7 +151,7 @@ setGeneric("extractRegionNearestDistToY", function(x,
 setGeneric("extractRegionRelativePosition", function(x,
                                                      region=NULL,
                                                      ambiguityMethod=c("mean", "sum", "min", "max"),
-                                                     nomapValue=c("NA","0"),
+                                                     nomapValue=c("NA","zero"),
                                                      ignore.strand=FALSE){standardGeneric("extractRegionRelativePosition")})
 
 
@@ -165,7 +165,7 @@ setGeneric("extractDistToRegion5end", function(x,
                                                maxgap=-1L, 
                                                minoverlap=0L,
                                                type=c("any", "start", "end", "within", "equal"),
-                                               nomapValue=c("NA","0","nearest")){standardGeneric("extractDistToRegion5end")})
+                                               nomapValue=c("NA","zero","nearest")){standardGeneric("extractDistToRegion5end")})
 
 #' Method extractDistToRegion3end
 #' @rdname extractRegionProperty-methods
@@ -177,4 +177,4 @@ setGeneric("extractDistToRegion3end", function(x,
                                                maxgap=-1L, 
                                                minoverlap=0L,
                                                type=c("any", "start", "end", "within", "equal"),
-                                               nomapValue=c("NA","0","nearest")){standardGeneric("extractDistToRegion3end")})
+                                               nomapValue=c("NA","zero","nearest")){standardGeneric("extractDistToRegion3end")})

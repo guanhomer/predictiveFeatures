@@ -35,7 +35,7 @@
 #'
 #' @param maxgap,minoverlap,type See \code{?\link{findOverlaps}} in the \bold{IRanges} package for a description of these arguments.
 #'
-#' @param nomapValue When \code{nomapValue} is \code{"NA"}, \code{"0"}, or \code{"FALSE"},
+#' @param nomapValue When \code{nomapValue} is \code{"NA"}, \code{"zero"}, or \code{"FALSE"},
 #' the \code{x} that do not match the \code{region} will return \code{NA}, \code{0}, and \code{FALSE} respectively.
 #' If \code{nomapValue} is \code{"nearest"}, the not matched \code{x} will be set to be the property value on its nearest \code{region}.
 #'
@@ -234,7 +234,7 @@ setMethod("extractRegionProperty",
                    maxgap = 0L,
                    minoverlap = 0L,
                    type = c("any", "start", "end", "within", "equal"),
-                   nomapValue = c("NA", "0", "FALSE", "nearest"),
+                   nomapValue = c("NA", "zero", "FALSE", "nearest"),
                    ignore.strand = FALSE) {
             stopifnot(is(x, "GRanges"))
             stopifnot(is(region, "GRanges") | is(region, "GRangesList"))
@@ -284,7 +284,7 @@ setMethod("extractRegionProperty",
                     return_property[is.na(return_property)] <- 0
                   }
                 }
-              } else if (nomapValue == "0") {
+              } else if (nomapValue == "zero") {
                 return_property[is.na(return_property)] <- 0
               } else if (nomapValue == "FALSE") {
                 return_property[is.na(return_property)] <- FALSE
@@ -362,7 +362,7 @@ setMethod("extractRegionLength",
                    maxgap = -1L,
                    minoverlap = 0L,
                    type = c("any", "start", "end", "within", "equal"),
-                   nomapValue = c("NA", "0", "nearest"),
+                   nomapValue = c("NA", "zero", "nearest"),
                    ignore.strand = FALSE) {
             stopifnot(is(x, "GRanges"))
             ambiguityMethod <- match.arg(ambiguityMethod)
@@ -414,7 +414,7 @@ setMethod("extractRegionLetterFrequency",
                    maxgap = -1L,
                    minoverlap = 0L,
                    type = c("any", "start", "end", "within", "equal"),
-                   nomapValue = c("NA", "0", "nearest"),
+                   nomapValue = c("NA", "zero", "nearest"),
                    ignore.strand = FALSE,
                    efficient = TRUE,
                    ...) {
@@ -565,7 +565,7 @@ setMethod("extractRegionScores",
                    maxgap = -1L,
                    minoverlap = 0L,
                    type = c("any", "start", "end", "within", "equal"),
-                   nomapValue = c("NA", "0", "nearest"),
+                   nomapValue = c("NA", "zero", "nearest"),
                    missingScores = c("zero", "mean", "none"),
                    ignore.strand = FALSE,
                    efficient = TRUE,
@@ -654,7 +654,7 @@ setMethod("extractRegionYCount",
                    maxgap = -1L,
                    minoverlap = 0L,
                    type = c("any", "start", "end", "within", "equal"),
-                   nomapValue = c("NA", "0", "nearest"),
+                   nomapValue = c("NA", "zero", "nearest"),
                    ignore.strand = FALSE,
                    efficient = TRUE) {
             stopifnot(is(x, "GRanges"))
@@ -726,7 +726,7 @@ setMethod("extractRegionNearestDistToY",
                    maxgap = -1L,
                    minoverlap = 0L,
                    type = c("any", "start", "end", "within", "equal"),
-                   nomapValue = c("NA", "0", "nearest"),
+                   nomapValue = c("NA", "zero", "nearest"),
                    maxDist = 3e6,
                    ignore.strand = FALSE) {
             stopifnot(is(x, "GRanges"))
@@ -803,12 +803,16 @@ setMethod("extractRegionRelativePosition",
           function(x,
                    region = NULL,
                    ambiguityMethod = c("mean", "sum", "min", "max"),
-                   nomapValue = c("NA", "0"),
+                   nomapValue = c("NA", "zero"),
                    ignore.strand = FALSE) {
             stopifnot(is(x, "GRanges"))
             ambiguityMethod <- match.arg(ambiguityMethod)
             nomapValue <- match.arg(nomapValue)
-            nomapValue <- eval(parse(text = nomapValue))
+            if(nomapValue == "NA"){
+              nomapValue <- NA
+            }else{
+              nomapValue <- 0
+            }
             
             if (is.null(region)) {
               rrp_property <- rep(nomapValue, length(x))
@@ -867,7 +871,7 @@ setMethod("extractDistToRegion5end",
                    maxgap = -1L,
                    minoverlap = 0L,
                    type = c("any", "start", "end", "within", "equal"),
-                   nomapValue = c("NA", "0", "nearest")) {
+                   nomapValue = c("NA", "zero", "nearest")) {
             stopifnot(is(x, "GRanges"))
             ambiguityMethod <- match.arg(ambiguityMethod)
             type <- match.arg(type)
@@ -909,7 +913,7 @@ setMethod("extractDistToRegion5end",
                 if (anyNA(d2five_property))
                   d2five_property[is.na(d2five_property)] <-
                   max(d2five_property, na.rm = TRUE)
-              } else if (nomapValue == "0") {
+              } else if (nomapValue == "zero") {
                 d2five_property[is.na(d2five_property)] <- 0
               }
             } else{
@@ -931,7 +935,7 @@ setMethod("extractDistToRegion3end",
                    maxgap = -1L,
                    minoverlap = 0L,
                    type = c("any", "start", "end", "within", "equal"),
-                   nomapValue = c("NA", "0", "nearest")) {
+                   nomapValue = c("NA", "zero", "nearest")) {
             stopifnot(is(x, "GRanges"))
             ambiguityMethod <- match.arg(ambiguityMethod)
             type <- match.arg(type)
@@ -973,7 +977,7 @@ setMethod("extractDistToRegion3end",
                 if (anyNA(d2three_property))
                   d2three_property[is.na(d2three_property)] <-
                   max(d2three_property, na.rm = TRUE)
-              } else if (nomapValue == "0") {
+              } else if (nomapValue == "zero") {
                 d2three_property[is.na(d2three_property)] <- 0
               }
             } else{
