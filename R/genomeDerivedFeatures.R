@@ -829,11 +829,11 @@ EnumerateRegionFeatures <- function(x,
       message("Done")
       for (i in flankSizes) {
         Message_i(
-          paste0("GC_flank_", i, "_x"),
+          paste0("GC_flank_", i, "bp"),
           paste0("GC content of x flanked by ", i, ""),
           message_env
         )
-        X[[paste0("GC_flank_", i, "_x")]] <-
+        X[[paste0("GC_flank_", i, "bp")]] <-
           quiet(extractRegionLetterFrequency(trim(x + i), bsgenome))
         message("Done")
       }
@@ -851,11 +851,11 @@ EnumerateRegionFeatures <- function(x,
           message("Done")
           for (j in flankSizes) {
             Message_i(
-              paste0(names(gscores)[i], "_flank_", j, "_x"),
+              paste0(names(gscores)[i], "_flank_", j, "bp"),
               paste0(names(gscores)[i], " scores of x flanked by ", j),
               message_env
             )
-            X[[paste0(names(gscores)[i], "_flank_", j, "_x")]] <-
+            X[[paste0(names(gscores)[i], "_flank_", j, "bp")]] <-
               quiet(extractRegionScores(trim(x + j), gscores[[i]], missingScores = "zero"))
             message("Done")
           }
@@ -867,11 +867,11 @@ EnumerateRegionFeatures <- function(x,
         message("Done")
         for (j in flankSizes) {
           Message_i(
-            paste0("gscores_flank_", j, "_x"),
+            paste0("gscores_flank_", j, "bp"),
             paste0("gscores of x flanked by ", j),
             message_env
           )
-          X[[paste0("gscores_flank_", j, "_x")]] <-
+          X[[paste0("gscores_flank_", j, "bp")]] <-
             quiet(extractRegionScores(trim(x + j), gscores, missingScores = "zero"))
           message("Done")
         }
@@ -899,7 +899,7 @@ EnumerateRegionFeatures <- function(x,
                 names(clusteringY)[i],
                 "Count_flank_",
                 j,
-                "_x"
+                "bp"
               ),
               paste0(
                 "log2(count of ",
@@ -914,7 +914,7 @@ EnumerateRegionFeatures <- function(x,
                       names(clusteringY)[i],
                       "Count_flank_",
                       j,
-                      "_x")]] <-
+                      "bp")]] <-
               quiet(log2(
                 extractRegionYCount(trim(x + j), clusteringY[[i]], normalize = FALSE) + 1
               ))
@@ -943,11 +943,11 @@ EnumerateRegionFeatures <- function(x,
         message("Done")
         for (i in flankSizes) {
           Message_i(
-            paste0("log2_yCount_flank_", i, "_x"),
+            paste0("log2_yCount_flank_", i, "bp"),
             paste0("log2(Count of y on x flanked by ", i, " + 1)"),
             message_env
           )
-          X[[paste0("log2_yCount_flank_", i, "_x")]] <-
+          X[[paste0("log2_yCount_flank_", i, "bp")]] <-
             quiet(log2(
               extractRegionYCount(trim(x + i), clusteringY, normalize = FALSE) + 1
             ))
