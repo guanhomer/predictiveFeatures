@@ -771,12 +771,12 @@ genomeDerivedFeatures <- function(x,
   message("Done")
   rm(txbg)
   
-  Message_i("MetaTxTopology", "meta-transcript topology", message_env)
+  Message_i("meta_tx_topology", "meta-transcript topology", message_env)
   
-  X[["MetaTxTopology"]] <-
+  X[["meta_tx_topology"]] <-
     suppressWarnings(topologyOnTranscripts(x, transcriptdb))
   
-  X[["MetaTxTopology"]][is.na(X[["MetaTxTopology"]])] <- 0
+  X[["meta_tx_topology"]][is.na(X[["meta_tx_topology"]])] <- 0
   
   message("Done")
   
