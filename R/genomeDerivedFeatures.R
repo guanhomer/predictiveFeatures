@@ -823,17 +823,17 @@ EnumerateRegionFeatures <- function(x,
     #GC content  of x and its flanks
     isCircular(x)[isCircular(x)] <- FALSE
     if (!is.null(bsgenome)) {
-      Message_i("GC_x", "GC content of x", message_env)
-      X[["GC_x"]] <-
+      Message_i("gc_content_x", "GC content of x", message_env)
+      X[["gc_content_x"]] <-
         quiet(extractRegionLetterFrequency(trim(x), bsgenome))
       message("Done")
       for (i in flankSizes) {
         Message_i(
-          paste0("GC_flank_", i, "bp"),
+          paste0("gc_content_flank_", i, "bp"),
           paste0("GC content of x flanked by ", i, ""),
           message_env
         )
-        X[[paste0("GC_flank_", i, "bp")]] <-
+        X[[paste0("gc_content_flank_", i, "bp")]] <-
           quiet(extractRegionLetterFrequency(trim(x + i), bsgenome))
         message("Done")
       }
@@ -1007,10 +1007,10 @@ EnumerateRegionFeatures <- function(x,
     
     #GC content of region
     if (!is.null(bsgenome)) {
-      Message_i(paste0("GC_", region_name),
+      Message_i(paste0("gc_content_", region_name),
                 paste0("GC content of ", region_info),
                 message_env)
-      X[[paste0("GC_", region_name)]] <-
+      X[[paste0("gc_content_", region_name)]] <-
         quiet(
           extractRegionLetterFrequency(
             x,
