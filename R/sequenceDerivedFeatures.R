@@ -131,8 +131,7 @@ sequenceDerivedFeatures <- function(x,
       pos_replace_plus <- start(mutHit) - start(xHit) + 1
       pos_replace_minus <- end(xHit) - start(mutHit) + 1
       nt_replace_plus <- as.character(mcols(mutHit)[[1]])
-      nt_replace_minus <-
-        as.character(complement(DNAStringSet(mcols(mutHit)[[1]])))
+      nt_replace_minus <- as.character(complement(DNAStringSet(mcols(mutHit)[[1]])))
       indx_minus_range <- as.logical(strand(xHit) == "-")
       rm(xHit, mutHit)
       pos_plus_indx <-
