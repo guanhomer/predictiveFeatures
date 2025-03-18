@@ -19,7 +19,6 @@
 #' the fourth variable is calculated by the cumulative frequency of nucleotides from
 #' the leftmost position to the current position.
 #' }
-#' }
 #'
 #' \item{\strong{PseDNC}}{
 #' This encoding method calculates the occurrence of all 16 possible dinucleotides 
@@ -31,6 +30,7 @@
 #' These physicochemical properties include Enthalpy, Entropy, and Free energy.
 #' The resulting matrix is normalized by row sums to provide a consistent representation 
 #' of the sequence characteristics.
+#' }
 #' }
 #'
 #' @param  cnn Whether report in CNN format; default is \code{FALSE}.
