@@ -21,6 +21,18 @@
 #' }
 #' }
 #'
+#' \item{\strong{PseDNC}}{
+#' This encoding method calculates the occurrence of all 16 possible dinucleotides 
+#' (e.g., AA, AC, AG, AT, CA, etc.) in the input nucleotide sequence. 
+#' For each sequence, a feature vector is created where each element represents the 
+#' frequency of a specific dinucleotide. Additionally, a correlation factor is calculated 
+#' across tiers (up to 6) to capture dependencies between physicochemical properties 
+#' of dinucleotides separated by various distances within the sequence. 
+#' These physicochemical properties include Enthalpy, Entropy, and Free energy.
+#' The resulting matrix is normalized by row sums to provide a consistent representation 
+#' of the sequence characteristics.
+#' }
+#'
 #' @param  cnn Whether report in CNN format; default is \code{FALSE}.
 #'
 #' @details The function first extract DNA sequence within the genomic ranges defined by \code{x}.
@@ -52,6 +64,10 @@
 #' seq_iRNA <- sequenceDerivedFeatures(X, Hsapiens, encoding = "iRNA")
 #' str(seq_iRNA)
 #'
+#' ## Extract Pseudo dinucleotide composition (PseDNC) encoded sequence features
+#' seq_PseDNC <- sequenceDerivedFeatures(X, Hsapiens, encoding = "PseDNC")
+#' str(seq_PseDNC)
+#'
 #' ## Extract mutated features
 #' SNP <- resize(X[c(10,15,3,6)], 1)
 #' SNP$mutateTo <- c("A","C","G","C")
@@ -75,7 +91,7 @@
 sequenceDerivedFeatures <- function(x,
                                     sequence,
                                     mutation = NULL,
-                                    encoding = c("onehot", "iRNA"),
+                                    encoding = c("onehot", "iRNA", "PseDNC"),
                                     cnn = FALSE) {
   encoding = match.arg(encoding)
   stopifnot(all(width(x) == width(x)[1]))
@@ -265,7 +281,105 @@ assign_method <- function(sequence_M, encoding) {
     seqfeatures <- onehot_encode(sequence_M)
   } else if (encoding == "iRNA") {
     seqfeatures <- iRNA_encode(sequence_M)
+  } else if (encoding == "PseDNC") {
+    seqfeatures <- PseDNC_encode(sequence_M)
   }
 }
 
+get_dinucleotide_physicochemical_properties <- function() {
+  # # Define possible dinucleotides
+  # dinucleotides <- c("GG", "GA", "GC", "GT", "AG", "AA", "AC", "AT", 
+  #                    "CG", "CA", "CC", "CT", "TG", "TA", "TC", "TT")
+
+  # # Define physicochemical properties matrix
+  # properties <- matrix(c(
+  #   -12.2, -29.7, -3.26,
+  #   -13.3, -35.5, -2.35,
+  #   -14.2, -34.9, -3.42,
+  #   -10.2, -26.2, -2.24,
+  #   -7.6, -19.2, -2.08,
+  #   -6.6, -18.4, -0.93,
+  #   -10.2, -26.2, -2.24,
+  #   -5.7, -15.5, -1.10,
+  #   -8.0, -19.4, -2.36,
+  #   -10.5, -27.8, -2.11,
+  #   -12.2, -29.7, -3.26,
+  #   -7.6, -19.2, -2.08,
+  #   -7.6, -19.2, -2.11,
+  #   -8.1, -22.6, -1.33,
+  #   -10.2, -26.2, -2.35,
+  #   -6.6, -18.4, -0.93
+  # ), ncol = 3, byrow = TRUE)
+  # colnames(properties) <- c("Enthalpy", "Entropy", "FreeEnergy")
+  # rownames(properties) <- dinucleotides
+
+  # # normalise
+  # properties = scale(properties)
+
+  # dput(properties)
+  properties = structure(c(-1.07588314958376, -1.50235935302237, -1.85129442856305, 
+-0.300471870604474, 0.707562792068599, 1.09526843155824, -0.300471870604474, 
+1.44420350709892, 0.552480536272742, -0.416783562451367, -1.07588314958376, 
+0.707562792068599, 0.707562792068599, 0.513709972323777, -0.300471870604474, 
+1.09526843155824, -0.882196127443816, -1.82212495209119, -1.72489093574836, 
+-0.314997698777298, 0.819399158555737, 0.949044513679512, -0.314997698777298, 
+1.4190089260032, 0.786987819774793, -0.57428840902485, -0.882196127443816, 
+0.819399158555737, 0.819399158555737, 0.268406399279691, -0.314997698777298, 
+0.949044513679512, -1.45493929364262, -0.278708526544534, -1.66174909884668, 
+-0.136526785466743, 0.0702830197373169, 1.55672849464149, -0.136526785466743, 
+1.33699307661218, -0.291634139369787, 0.031506181261556, -1.45493929364262, 
+0.0702830197373169, 0.031506181261556, 1.03970398163135, -0.278708526544534, 
+1.55672849464149), dim = c(16L, 3L), dimnames = list(c("GG", 
+"GA", "GC", "GT", "AG", "AA", "AC", "AT", "CG", "CA", "CC", "CT", 
+"TG", "TA", "TC", "TT"), c("Enthalpy", "Entropy", "FreeEnergy"
+)))
+
+  return(properties)
+}
+
+# Pseudo dinucleotide composition (PseDNC)
+# https://doi.org/10.1016/j.ab.2015.08.021
+PseDNC_encode <- function(sequence_M) {
+  # Define possible dinucleotides
+  properties = get_dinucleotide_physicochemical_properties()
+  dinucleotides <- rownames(properties)
+
+  # Convert the sequence matrix to a dinucleotide index matrix
+  di_sequence_M <- paste0(sequence_M[, -ncol(sequence_M)], sequence_M[, -1])
+  di_sequence_M <- matrix(match(di_sequence_M, dinucleotides), nrow = nrow(sequence_M))
+
+  # Initialize a matrix to store dinucleotide frequencies
+  result_matrix <- matrix(0, nrow = nrow(sequence_M), ncol = length(dinucleotides))
+
+  # Calculate dinucleotide frequencies for each of the 16 dinucleotides
+  for (di_index in seq_along(dinucleotides)) {
+    result_matrix[,di_index] <- rowSums(di_sequence_M == di_index)
+  }
+  colnames(result_matrix) <- dinucleotides
+
+  # Calculate correlation factor for tiers 1 to (maximum) 6 
+  tier_N = min(6, nrow(sequence_M) - 1)
+  result_correlation = matrix(NA, nrow = nrow(sequence_M), ncol = tier_N)
+  colnames(result_correlation) = paste0("tier_", seq_len(tier_N))
+  for (tier_index in seq_len(tier_N)) {
+    tier_correlation = rep(0, nrow(sequence_M))
+    for (property_index in seq_len(ncol(properties))) {
+      property_di_sequence_M = matrix(properties[di_sequence_M, property_index], nrow = nrow(di_sequence_M))
+      tem <- property_di_sequence_M[, 1:(ncol(property_di_sequence_M) - tier_index)] - 
+             property_di_sequence_M[, (1 + tier_index):ncol(property_di_sequence_M)]
+      tier_correlation <- tier_correlation + rowMeans(tem^2, na.rm = TRUE)
+    }
+
+    # Average over properties
+    result_correlation[, tier_index] <- tier_correlation / ncol(properties)
+  }
+
+  # Weight and normalize
+  result_matrix = cbind(result_matrix, result_correlation * 0.9)
+  result_matrix = result_matrix / rowSums(result_matrix, na.rm = TRUE)
+
+  return(result_matrix)
+}
+
+                              
 ## To Do: add more sequence feature encoding methods.
