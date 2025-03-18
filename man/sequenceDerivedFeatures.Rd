@@ -34,7 +34,6 @@ and the third variable indicates the formation of weak hydrogen bond (A or T),
 the fourth variable is calculated by the cumulative frequency of nucleotides from
 the leftmost position to the current position.
 }
-}
 
 \item{\strong{PseDNC}}{
 This encoding method calculates the occurrence of all 16 possible dinucleotides 
@@ -46,7 +45,8 @@ of dinucleotides separated by various distances within the sequence.
 These physicochemical properties include Enthalpy, Entropy, and Free energy.
 The resulting matrix is normalized by row sums to provide a consistent representation 
 of the sequence characteristics.
-}}
+}
+}
 
 \item{cnn}{Whether report in CNN format; default is \code{FALSE}.}
 }
