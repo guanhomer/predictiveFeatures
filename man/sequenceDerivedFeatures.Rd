@@ -8,7 +8,7 @@ sequenceDerivedFeatures(
   x,
   sequence,
   mutation = NULL,
-  encoding = c("onehot", "iRNA"),
+  encoding = c("onehot", "iRNA", "PseDNC"),
   cnn = FALSE
 )
 }
@@ -17,23 +17,35 @@ sequenceDerivedFeatures(
 
 \item{sequence}{A \link{BSgenome} or \link{XStringSet} object for the genome sequence.}
 
-\item{mutation}{A \link{GRanges} object indicating the SNP ranges (must be single-based), 
+\item{mutation}{A \link{GRanges} object indicating the SNP ranges (must be single-based),
 a metadata column is required to annotate the changed nucleotide sequence.}
 
 \item{encoding}{Can be one of the following:
 \describe{
-\item{\strong{onehot}}{From the 5' end to the 3'end of x, 
-each nucleotide position is coded by 4 indicators/dummy variables, 
+\item{\strong{onehot}}{From the 5' end to the 3'end of x,
+each nucleotide position is coded by 4 indicators/dummy variables,
 where each dummy variable indicates that the position is equal to the base "A", "T", "C", and "G", respectively.}
 
 \item{\strong{iRNA}}{
-Each nucleotide position is encoded by 4 variables, 
-the first variable indicates that the nucleotide is purine (A or G), 
-the second variable indicates that the nucleotide has an amino group (A or C), 
-and the third variable indicates the formation of weak hydrogen bond (A or T), 
-the fourth variable is calculated by the cumulative frequency of nucleotides from 
+Each nucleotide position is encoded by 4 variables,
+the first variable indicates that the nucleotide is purine (A or G),
+the second variable indicates that the nucleotide has an amino group (A or C),
+and the third variable indicates the formation of weak hydrogen bond (A or T),
+the fourth variable is calculated by the cumulative frequency of nucleotides from
 the leftmost position to the current position.
 }
+}
+
+\item{\strong{PseDNC}}{
+This encoding method calculates the occurrence of all 16 possible dinucleotides 
+(e.g., AA, AC, AG, AT, CA, etc.) in the input nucleotide sequence. 
+For each sequence, a feature vector is created where each element represents the 
+frequency of a specific dinucleotide. Additionally, a correlation factor is calculated 
+across tiers (up to 6) to capture dependencies between physicochemical properties 
+of dinucleotides separated by various distances within the sequence. 
+These physicochemical properties include Enthalpy, Entropy, and Free energy.
+The resulting matrix is normalized by row sums to provide a consistent representation 
+of the sequence characteristics.
 }}
 
 \item{cnn}{Whether report in CNN format; default is \code{FALSE}.}
@@ -51,7 +63,7 @@ the 2nd is for the mutated sequences. The mapping between the matrix and the row
 A function to extract sequence features from the input \code{\link{GRanges}} object and the \code{\link{BSgenome}} object.
 }
 \details{
-The function first extract DNA sequence within the genomic ranges defined by \code{x}. 
+The function first extract DNA sequence within the genomic ranges defined by \code{x}.
 Then, the DNA strings are processed according to the selected sequence encoding method.
 }
 \examples{
@@ -63,14 +75,18 @@ set.seed(01)
 X <- GRanges(rep(c("chr1", "chr2"), c(15, 15)),
              IRanges(c(sample(11874:12127, 15), sample(38814:41527,15)), width=5),
              strand=Rle(c("+", "-"), c(15, 15)))
-   
+
 ## Extract onehot encoded sequence features
-seq_onehot <- sequenceDerivedFeatures(X, Hsapiens, encoding = "onehot")       
-str(seq_onehot)                
+seq_onehot <- sequenceDerivedFeatures(X, Hsapiens, encoding = "onehot")
+str(seq_onehot)
 
 ## Extract iRNA encoded sequence features
 seq_iRNA <- sequenceDerivedFeatures(X, Hsapiens, encoding = "iRNA")
 str(seq_iRNA)
+
+## Extract Pseudo dinucleotide composition (PseDNC) encoded sequence features
+seq_PseDNC <- sequenceDerivedFeatures(X, Hsapiens, encoding = "PseDNC")
+str(seq_PseDNC)
 
 ## Extract mutated features
 SNP <- resize(X[c(10,15,3,6)], 1)
