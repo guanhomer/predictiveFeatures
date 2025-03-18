@@ -46,7 +46,7 @@ These physicochemical properties include Enthalpy, Entropy, and Free energy.
 The resulting matrix is normalized by row sums to provide a consistent representation 
 of the sequence characteristics.
 }
-}
+}}
 
 \item{cnn}{Whether report in CNN format; default is \code{FALSE}.}
 }
