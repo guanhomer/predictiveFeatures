@@ -21,7 +21,7 @@
 #' }
 #'
 #' \item{\strong{PseDNC}}{
-#' This encoding method calculates the occurrence of all 16 possible dinucleotides 
+#' This encoding method calculates the occurrence frequency of all 16 possible dinucleotides 
 #' (e.g., AA, AC, AG, AT, CA, etc.) in the input nucleotide sequence. 
 #' For each sequence, a feature vector is created where each element represents the 
 #' frequency of a specific dinucleotide. Additionally, a correlation factor is calculated 
