@@ -341,7 +341,7 @@ get_dinucleotide_physicochemical_properties <- function() {
 # https://doi.org/10.1016/j.ab.2015.08.021
 PseDNC_encode <- function(sequence_M) {
   # Define possible dinucleotides
-  properties = get_dinucleotide_physicochemical_properties()
+  properties <- get_dinucleotide_physicochemical_properties()
   dinucleotides <- rownames(properties)
 
   # Convert the sequence matrix to a dinucleotide index matrix
@@ -353,7 +353,7 @@ PseDNC_encode <- function(sequence_M) {
 
   # Calculate dinucleotide frequencies for each of the 16 dinucleotides
   for (di_index in seq_along(dinucleotides)) {
-    result_matrix[,di_index] <- rowSums(di_sequence_M == di_index)
+    result_matrix[,di_index] <- rowMeans(di_sequence_M == di_index, na.rm = T)
   }
   colnames(result_matrix) <- dinucleotides
 
